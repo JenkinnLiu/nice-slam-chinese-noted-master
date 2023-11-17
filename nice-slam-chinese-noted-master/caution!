@@ -1,0 +1,1 @@
+在/home/jenkinliu/anaconda3/envs/py310/lib/python3.10/site-packages/trimesh/util.py的1784行添加import rtree来避免1785行的retree找不到一个叫index的属性
