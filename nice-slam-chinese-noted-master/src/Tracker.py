@@ -108,9 +108,9 @@ class Tracker(object):
         # 通过采样射线rays_o和rays_d和深度图即可渲染
         ret = self.renderer.render_batch_ray( #开始放入神经网络，渲染一下
             self.c, self.decoders, batch_rays_d, batch_rays_o, self.device, stage='color', gt_depth=batch_gt_depth)
-        depth, uncertainty, color = ret   #得到了渲染之后的深度、颜色、和不确定性
+        depth, uncertainty, color = ret   #得到了渲染之后的深度、深度方差，和颜色
 
-        uncertainty = uncertainty.detach()
+        uncertainty = uncertainty.detach() #深度方差
         if self.handle_dynamic: #把动态物体处理掉，怎么处理呢？
             #如果有动态物体，则batch_gt_depth - depth的值会比较大，把它mask掉，即mask取0。其中uncertainty是用于处理动态物体的
             tmp = torch.abs(batch_gt_depth - depth) / torch.sqrt(uncertainty + 1e-10) #tmp大于其中位数的10倍，代表检测出动态物体
@@ -120,7 +120,7 @@ class Tracker(object):
             mask = batch_gt_depth > 0
 
         loss = (torch.abs(batch_gt_depth - depth) /
-                torch.sqrt(uncertainty + 1e-10))[mask].sum() #计算mask掉动态物体的几何损失loss
+                torch.sqrt(uncertainty + 1e-10))[mask].sum() #论文中改进的几何loss，uncertainty为深度方差
 
         if self.use_color_in_tracking:
             color_loss = torch.abs(
